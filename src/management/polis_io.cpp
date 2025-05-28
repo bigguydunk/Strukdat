@@ -1,6 +1,9 @@
 #include "../../include/management/polis_io.hpp"
+#include "../../include/management/xorcipher.hpp"
 #include <fstream>
 #include <sstream>
+
+const string SECRET_KEY = "adamsepuh";
 
 void loadPolisFromCSV(const std::string& filename, std::vector<Polis>& daftarPolis) {
     std::ifstream file(filename);
@@ -36,7 +39,8 @@ void Asuransi::saveKlaimToCSV(const std::string& filename) const {
     file << "nomorPolis,namaKlaim,jumlahKlaim\n";
     for (const auto& polis : daftarPolis) {
         for (const auto& klaim : polis.klaim) {
-            file << polis.nomorPolis << ',' << klaim.first << ',' << klaim.second << "\n";
+            string namaKlaimTerenkripsi= xorcipher(klaim.first, SECRET_KEY);
+            file << polis.nomorPolis << ',' << namaKlaimTerenkripsi << ',' << klaim.second << "\n";
         }
     }
 }
@@ -52,14 +56,15 @@ void Asuransi::loadKlaimFromCSV(const std::string& filename) {
     getline(file, line); // skip header
     while (getline(file, line)) {
         std::stringstream ss(line);
-        std::string nomorPolis, namaKlaim, jumlahKlaimStr;
+        std::string nomorPolis, namaKlaimTerenkripsi, jumlahKlaimStr;
         getline(ss, nomorPolis, ',');
-        getline(ss, namaKlaim, ',');
+        getline(ss, namaKlaimTerenkripsi, ',');
         getline(ss, jumlahKlaimStr, ',');
+        string namaKlaimAsli= xorcipher(namaKlaimTerenkripsi, SECRET_KEY);
         int jumlahKlaim = std::stoi(jumlahKlaimStr);
         for (auto& polis : daftarPolis) {
             if (polis.nomorPolis == nomorPolis) {
-                polis.klaim.push_back(std::make_pair(namaKlaim, jumlahKlaim));
+                polis.klaim.push_back(std::make_pair(namaKlaimTerenkripsi, jumlahKlaim));
                 break;
             }
         }
