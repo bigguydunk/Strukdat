@@ -46,6 +46,7 @@ void Asuransi::saveToCSV(const string& filename) const {
 }
 
 void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
+    simpanStateUndo(); 
     string asciiPart;
     for (int i = 0; i < 3 && i < nama.size(); ++i) {
         char upperChar = toupper(nama[i]);
@@ -58,6 +59,7 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
 }
 
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
+    simpanStateUndo();
     bool found = false;
     for (auto& polis : daftarPolis) {
         if (polis.nomorPolis == nomorPolis) {
@@ -131,4 +133,30 @@ void Asuransi::tampilkanPolis() const {
         }
         cout << endl;
     }
+}
+void Asuransi::simpanStateUndo() {
+    undoStack.push(daftarPolis);
+    while (!redoStack.empty()) redoStack.pop(); 
+}
+
+void Asuransi::undo() {
+    if (undoStack.empty()) {
+        std::cout << "Tidak ada data Undo.\n";
+        return;
+    }
+    redoStack.push(daftarPolis);
+    daftarPolis = undoStack.top();
+    undoStack.pop();
+    std::cout << "Undo berhasil.\n";
+}
+
+void Asuransi::redo() {
+    if (redoStack.empty()) {
+        std::cout << "Tidak ada data Redo.\n";
+        return;
+    }
+    undoStack.push(daftarPolis);
+    daftarPolis = redoStack.top();
+    redoStack.pop();
+    std::cout << "Redo berhasil.\n";
 }

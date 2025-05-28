@@ -74,15 +74,21 @@ int main() {
                 asuransi.prosesKlaim();
                 break;
             case 8:
+                asuransi.undo();
+                break;
+            case 9:
+                asuransi.redo();
+                break;
+            case 10:
                 cout << "Keluar dari program." << endl;
                 break;
             default:
                 cout << "Pilihan tidak valid. Silakan coba lagi." << endl;
         }
-        if (pilihan != 8 && !konfirmasiLanjut()) {
+        if (pilihan != 10 && !konfirmasiLanjut()) {
             break;
         }
-    } while (pilihan != 8);
+    } while (pilihan != 10);
     asuransi.saveToCSV(dataPath);
     asuransi.saveKlaimToCSV(klaimPath);
     return 0;
