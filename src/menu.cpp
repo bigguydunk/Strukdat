@@ -11,7 +11,9 @@ void tampilkanMenu() {
     cout << "5. Tambah Klaim Kesehatan" << endl;
     cout << "6. Tampilkan Klaim Kesehatan" << endl;
     cout << "7. Proses Klaim Kesehatan" << endl;
-    cout << "8. Keluar" << endl;
+    cout << "8. Undo" << endl;
+    cout << "9. Redo" << endl;
+    cout << "10. Keluar" << endl;
     cout << "Pilih opsi: ";
 }
 
