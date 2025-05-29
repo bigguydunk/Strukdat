@@ -18,6 +18,7 @@ private:
     std::vector<Polis> daftarPolis;
     std::queue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
     std::vector<std::pair<std::string, std::pair<std::string, int>>> klaimDiproses;
+    
     std::stack<std::vector<Polis>> undoStack;
     std::stack<std::vector<Polis>> redoStack;
 
