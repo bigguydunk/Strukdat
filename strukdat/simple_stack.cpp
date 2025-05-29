@@ -55,3 +55,4 @@ void SimpleStack<T>::clear() {
 
 // Explicit instantiation for the types used in your project
 template class SimpleStack<PolisList>;
+template class SimpleStack<AsuransiState>;
