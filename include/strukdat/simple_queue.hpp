@@ -14,7 +14,9 @@ class SimpleQueue {
     int count;
 public:
     SimpleQueue();
+    SimpleQueue(const SimpleQueue& other);
     ~SimpleQueue();
+    SimpleQueue& operator=(const SimpleQueue& other);
     void enqueue(const T& val);
     void dequeue();
     T& front();

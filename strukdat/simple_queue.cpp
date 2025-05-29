@@ -71,4 +71,26 @@ const typename SimpleQueue<T>::Node* SimpleQueue<T>::getFrontNode() const {
     return frontPtr;
 }
 
+template <typename T>
+SimpleQueue<T>::SimpleQueue(const SimpleQueue<T>& other) : frontPtr(nullptr), backPtr(nullptr), count(0) {
+    Node* curr = other.frontPtr;
+    while (curr) {
+        enqueue(curr->data);
+        curr = curr->next;
+    }
+}
+
+template <typename T>
+SimpleQueue<T>& SimpleQueue<T>::operator=(const SimpleQueue<T>& other) {
+    if (this != &other) {
+        clear();
+        Node* curr = other.frontPtr;
+        while (curr) {
+            enqueue(curr->data);
+            curr = curr->next;
+        }
+    }
+    return *this;
+}
+
 template class SimpleQueue<std::pair<std::string, std::pair<std::string, int>>>;

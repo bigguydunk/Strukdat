@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <unordered_map>
+#include <vector>
 
 using namespace std;
 const string SECRET_KEY = "adamsepuh";
@@ -130,21 +131,114 @@ void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, in
 }
 
 void Asuransi::prosesKlaim() {
-    cout << "Memproses klaim kesehatan:" << endl;
-    while (!antrianKlaim.isEmpty()) {
-        auto klaim = antrianKlaim.front();
-        auto it = nomorPolisMap.find(klaim.first);
-        if (it != nomorPolisMap.end()) {
-            Polis* polis = it->second;
-            polis->totalKlaim += klaim.second.second;
-            polis->addKlaim(klaim.second.first, klaim.second.second);
-        }
-        cout << "Memproses klaim untuk Nomor Polis: " << klaim.first 
-             << " | Nama Klaim: " << klaim.second.first 
-             << " | Klaim: Rp" << klaim.second.second << endl;
-        antrianKlaim.dequeue();
+    if (antrianKlaim.isEmpty()) {
+        cout << "Tidak ada klaim dalam antrian.\n";
+        return;
     }
-    cout << "Semua klaim telah diproses." << endl;
+    while (true) {
+        cout << "\n=== Proses Klaim Kesehatan ===\n";
+        cout << "1. Terima satu klaim\n";
+        cout << "2. Terima semua klaim\n";
+        cout << "3. Hapus satu klaim\n";
+        cout << "4. Hapus semua klaim\n";
+        cout << "5. Kembali ke menu utama\n";
+        cout << "Pilih opsi: ";
+        int opsi;
+        cin >> opsi;
+        if (opsi == 2) { // Accept all
+            simpanStateUndo();
+            cout << "Memproses semua klaim kesehatan:\n";
+            while (!antrianKlaim.isEmpty()) {
+                auto klaim = antrianKlaim.front();
+                auto it = nomorPolisMap.find(klaim.first);
+                if (it != nomorPolisMap.end()) {
+                    Polis* polis = it->second;
+                    polis->totalKlaim += klaim.second.second;
+                    polis->addKlaim(klaim.second.first, klaim.second.second);
+                }
+                cout << "Memproses klaim untuk Nomor Polis: " << klaim.first
+                     << " | Nama Klaim: " << klaim.second.first
+                     << " | Klaim: Rp" << klaim.second.second << endl;
+                antrianKlaim.dequeue();
+            }
+            cout << "Semua klaim telah diproses.\n";
+            break;
+        } else if (opsi == 4) { // Delete all
+            simpanStateUndo();
+            while (!antrianKlaim.isEmpty()) {
+                antrianKlaim.dequeue();
+            }
+            cout << "Semua klaim telah dihapus dari antrian.\n";
+            break;
+        } else if (opsi == 1 || opsi == 3) { // Accept one or Delete one
+            // List all claims with index
+            vector<pair<string, pair<string, int>>> daftarKlaim;
+            auto node = antrianKlaim.getFrontNode();
+            int idx = 1;
+            cout << "Daftar Klaim dalam Antrian:\n";
+            while (node != nullptr) {
+                const auto& klaim = node->data;
+                cout << idx << ". Nomor Polis: " << klaim.first
+                     << " | Nama Klaim: " << klaim.second.first
+                     << " | Klaim: Rp" << klaim.second.second << endl;
+                daftarKlaim.push_back(klaim);
+                node = node->next;
+                ++idx;
+            }
+            if (daftarKlaim.empty()) {
+                cout << "Tidak ada klaim dalam antrian.\n";
+                break;
+            }
+            cout << "Pilih nomor klaim yang ingin diproses: ";
+            int pilih;
+            cin >> pilih;
+            if (pilih < 1 || pilih > (int)daftarKlaim.size()) {
+                cout << "Pilihan tidak valid.\n";
+                continue;
+            }
+            simpanStateUndo();
+            // Remove the selected claim from the queue
+            SimpleQueue<pair<string, pair<string, int>>> tempQueue;
+            node = antrianKlaim.getFrontNode();
+            idx = 1;
+            while (node != nullptr) {
+                if (idx == pilih) {
+                    if (opsi == 1) { // Accept one
+                        auto& klaim = node->data;
+                        auto it = nomorPolisMap.find(klaim.first);
+                        if (it != nomorPolisMap.end()) {
+                            Polis* polis = it->second;
+                            polis->totalKlaim += klaim.second.second;
+                            polis->addKlaim(klaim.second.first, klaim.second.second);
+                        }
+                        cout << "Klaim diterima untuk Nomor Polis: " << klaim.first
+                             << " | Nama Klaim: " << klaim.second.first
+                             << " | Klaim: Rp" << klaim.second.second << endl;
+                    } else if (opsi == 3) { // Delete one
+                        auto& klaim = node->data;
+                        cout << "Klaim dihapus untuk Nomor Polis: " << klaim.first
+                             << " | Nama Klaim: " << klaim.second.first
+                             << " | Klaim: Rp" << klaim.second.second << endl;
+                    }
+                    // Do not enqueue this claim (removes it)
+                } else {
+                    tempQueue.enqueue(node->data);
+                }
+                node = node->next;
+                ++idx;
+            }
+            antrianKlaim = tempQueue;
+            // After processing one, ask if want to continue
+            cout << "Apakah ingin memproses klaim lain? (y/n): ";
+            char lanjut;
+            cin >> lanjut;
+            if (lanjut != 'y' && lanjut != 'Y') break;
+        } else if (opsi == 5) {
+            break;
+        } else {
+            cout << "Pilihan tidak valid.\n";
+        }
+    }
 }
 
 void Asuransi::tampilkanPolis() const {
@@ -202,9 +296,16 @@ void Asuransi::tampilkanKlaim() const {
 }
 
 void Asuransi::simpanStateUndo() {
-    undoStack.push(daftarPolis);
+    undoStack.push(AsuransiState(daftarPolis, antrianKlaim));
     while (!redoStack.isEmpty()) {
         redoStack.pop();
+    }
+}
+
+void Asuransi::rebuildNomorPolisMap() {
+    nomorPolisMap.clear();
+    for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
+        nomorPolisMap[node->data.nomorPolis] = &node->data;
     }
 }
 
@@ -213,9 +314,12 @@ void Asuransi::undo() {
         std::cout << "Tidak ada data untuk di-Undo.\n";
         return;
     }
-    redoStack.push(daftarPolis);
-    daftarPolis = undoStack.top();
+    redoStack.push(AsuransiState(daftarPolis, antrianKlaim));
+    AsuransiState prev = undoStack.top();
+    daftarPolis = prev.daftarPolis;
+    antrianKlaim = prev.antrianKlaim;
     undoStack.pop();
+    rebuildNomorPolisMap();
     std::cout << "Undo berhasil.\n";
 }
 
@@ -224,8 +328,11 @@ void Asuransi::redo() {
         std::cout << "Tidak ada data untuk di-Redo.\n";
         return;
     }
-    undoStack.push(daftarPolis);
-    daftarPolis = redoStack.top();
+    undoStack.push(AsuransiState(daftarPolis, antrianKlaim));
+    AsuransiState next = redoStack.top();
+    daftarPolis = next.daftarPolis;
+    antrianKlaim = next.antrianKlaim;
     redoStack.pop();
+    rebuildNomorPolisMap();
     std::cout << "Redo berhasil.\n";
 }
