@@ -28,6 +28,8 @@ public:
     void tampilkanKlaim() const;
     void prosesKlaim();
     void tampilkanPolis() const;
+    void urutkanPolisByUmur();
+    void urutkanPolisByRisiko();
     void loadFromCSV(const std::string& filename);
     void saveToCSV(const std::string& filename) const;
     void loadKlaimFromCSV(const std::string& filename);

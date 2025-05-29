@@ -1,4 +1,6 @@
 #include "../../include/management/polis.hpp"
+#include "../../include/management/xorcipher.hpp"
+#include "../../include/management/encoding.hpp"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -6,43 +8,77 @@
 #include <fstream>
 
 using namespace std;
+const string SECRET_KEY = "adamsepuh";
 
-// Helper to load polis from CSV (with clearing)
 void Asuransi::loadFromCSV(const string& filename) {
     daftarPolis.clear();
     ifstream file(filename);
     if (!file.is_open()) {
-        cout << "[DEBUG] Gagal membuka file: " << filename << endl;
         return;
     }
-    cout << "[DEBUG] Berhasil membuka file: " << filename << endl;
     string line;
-    getline(file, line); // skip header
-    int count = 0;
+    getline(file, line);
     while (getline(file, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (line.empty()) {
+            continue;
+        }
+
         stringstream ss(line);
         Polis p;
+        string namaHexTerenkripsi;
         string umurStr, risikoStr, totalKlaimStr;
-        getline(ss, p.nomorPolis, ',');
-        getline(ss, p.nama, ',');
-        getline(ss, umurStr, ',');
-        getline(ss, risikoStr, ',');
-        getline(ss, totalKlaimStr, ',');
-        p.umur = stoi(umurStr);
-        p.risiko = stoi(risikoStr);
-        p.totalKlaim = stoi(totalKlaimStr);
-        daftarPolis.push_back(p);
-        count++;
+
+        getline(ss, p.nomorPolis, '|');
+        getline(ss, namaHexTerenkripsi, '|');
+        getline(ss, umurStr, '|');
+        getline(ss, risikoStr, '|');
+        getline(ss, totalKlaimStr, '|');
+
+        if (namaHexTerenkripsi.empty() || umurStr.empty() || risikoStr.empty() || totalKlaimStr.empty() || p.nomorPolis.empty()) {
+            continue;
+        }
+        
+        string namaTerenkripsi = from_hex(namaHexTerenkripsi);
+        p.nama = xorcipher(namaTerenkripsi, SECRET_KEY);
+        
+        try {
+            p.umur = stoi(umurStr);
+            p.risiko = stoi(risikoStr);
+            p.totalKlaim = stoi(totalKlaimStr);
+            daftarPolis.push_back(p);
+        } catch (const std::exception& e) {
+            continue;
+        }
     }
-    cout << "[DEBUG] Jumlah polis yang dimuat: " << count << endl;
 }
 
 void Asuransi::saveToCSV(const string& filename) const {
     ofstream file(filename);
-    file << "nomorPolis,nama,umur,risiko,totalKlaim\n";
+    file << "nomorPolis|nama|umur|risiko|totalKlaim\n";
     for (const auto& p : daftarPolis) {
-        file << p.nomorPolis << ',' << p.nama << ',' << p.umur << ',' << p.risiko << ',' << p.totalKlaim << "\n";
+        string namaTerenkripsi = xorcipher(p.nama, SECRET_KEY);
+        string namaHexTerenkripsi = to_hex(namaTerenkripsi);
+        file << p.nomorPolis << '|' << namaHexTerenkripsi << '|' << p.umur << '|' << p.risiko << '|' << p.totalKlaim << "\n";
     }
+}
+
+void Asuransi::urutkanPolisByUmur() {
+    simpanStateUndo();
+    sort(daftarPolis.begin(), daftarPolis.end(), [](const Polis& a, const Polis& b) {
+        return a.umur < b.umur;
+    });
+    cout << "Polis berhasil diurutkan berdasarkan umur (termuda ke tertua)." << endl;
+}
+
+void Asuransi::urutkanPolisByRisiko() {
+    simpanStateUndo();
+    sort(daftarPolis.begin(), daftarPolis.end(), [](const Polis& a, const Polis& b) {
+        return a.risiko < b.risiko;
+    });
+    cout << "Polis berhasil diurutkan berdasarkan risiko (terendah ke tertinggi)." << endl;
 }
 
 void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
@@ -50,7 +86,7 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     string asciiPart;
     for (int i = 0; i < 3 && i < nama.size(); ++i) {
         char upperChar = toupper(nama[i]);
-        asciiPart += to_string(upperChar);
+        asciiPart += to_string(static_cast<int>(upperChar));
     }
     string nomorPolis = asciiPart + to_string(umur) + to_string(risiko);
     Polis polis = {nomorPolis, nama, umur, risiko, 0, {}};
@@ -104,22 +140,23 @@ void Asuransi::prosesKlaim() {
         klaimDiproses.push_back(klaim);
         antrianKlaim.pop();
     }
+    cout << "Semua klaim telah diproses." << endl;
 }
 
 void Asuransi::tampilkanPolis() const {
-    cout << left << setw(12) << "Nomor Polis" 
-         << left << setw(14) << "| Nama" 
-         << left << setw(12) << "| Umur" 
-         << left << setw(12) << "| Risiko" 
-         << left << setw(15) << "| Total Klaim" 
-         << left << setw(12) << "| Klaim Detail" << endl;
-    cout << "------------------------------------------------------------------------------------------" << endl;
+    cout << left << setw(15) << "Nomor Polis" 
+         << left << setw(20) << "| Nama" 
+         << left << setw(10) << "| Umur" 
+         << left << setw(10) << "| Risiko" 
+         << left << setw(20) << "| Total Klaim" 
+         << left << "| Klaim Detail" << endl;
+    cout << "----------------------------------------------------------------------------------------------------" << endl;
     for (const auto& polis : daftarPolis) {
-        cout << left << setw(12) << polis.nomorPolis 
-             << left << "| " << setw(12) << polis.nama 
-             << left << "| " << setw(10) << polis.umur 
-             << left << "| " << setw(10) << polis.risiko 
-             << left << "| Rp" << setw(10) << polis.totalKlaim;
+        cout << left << setw(15) << polis.nomorPolis 
+             << left << "| " << setw(18) << polis.nama 
+             << left << "| " << setw(8) << polis.umur 
+             << left << "| " << setw(8) << polis.risiko 
+             << left << "| Rp" << setw(16) << polis.totalKlaim;
         if (!polis.klaim.empty()) {
             cout << " | ";
             for (size_t i = 0; i < polis.klaim.size(); ++i) {
@@ -134,14 +171,17 @@ void Asuransi::tampilkanPolis() const {
         cout << endl;
     }
 }
+
 void Asuransi::simpanStateUndo() {
     undoStack.push(daftarPolis);
-    while (!redoStack.empty()) redoStack.pop(); 
+    while (!redoStack.empty()) {
+        redoStack.pop();
+    }
 }
 
 void Asuransi::undo() {
     if (undoStack.empty()) {
-        std::cout << "Tidak ada data Undo.\n";
+        std::cout << "Tidak ada data untuk di-Undo.\n";
         return;
     }
     redoStack.push(daftarPolis);
@@ -152,7 +192,7 @@ void Asuransi::undo() {
 
 void Asuransi::redo() {
     if (redoStack.empty()) {
-        std::cout << "Tidak ada data Redo.\n";
+        std::cout << "Tidak ada data untuk di-Redo.\n";
         return;
     }
     undoStack.push(daftarPolis);

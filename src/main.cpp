@@ -2,21 +2,14 @@
 #include "../include/menu.hpp"
 #include <iostream>
 #include <string>
-#include <windows.h>
 using namespace std;
-
-std::string getExeDir() {
-    char buffer[MAX_PATH];
-    GetModuleFileNameA(NULL, buffer, MAX_PATH);
-    std::string path(buffer);
-    size_t pos = path.find_last_of("\\/");
-    return (std::string::npos == pos) ? "" : path.substr(0, pos);
-}
 
 int main() {
     Asuransi asuransi;
-    std::string dataPath = getExeDir() + "\\..\\data\\polis.csv";
-    std::string klaimPath = getExeDir() + "\\..\\data\\klaim.csv";
+    
+    std::string dataPath = "data/polis.csv";
+    std::string klaimPath = "data/klaim.csv";
+
     asuransi.loadFromCSV(dataPath);
     asuransi.loadKlaimFromCSV(klaimPath);
     int pilihan;
@@ -26,7 +19,14 @@ int main() {
     do {
         tampilkanMenu();
         cin >> pilihan;
+        if(cin.fail()){
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Input tidak valid. Harap masukkan angka." << endl;
+            continue;
+        }
         cin.ignore();
+        
         switch (pilihan) {
             case 1:
                 do {
@@ -43,14 +43,12 @@ int main() {
                 cin >> risiko;
                 cin.ignore();
                 asuransi.tambahPolis(nama, umur, risiko);
-                asuransi.saveToCSV(dataPath); // Save after adding polis
-                asuransi.saveKlaimToCSV(klaimPath); // Save klaim (empty for new polis)
                 break;
             case 2:
-                cout << "Fitur urutkan berdasarkan umur belum diimplementasikan." << endl;
+                asuransi.urutkanPolisByUmur();
                 break;
             case 3:
-                cout << "Fitur urutkan berdasarkan risiko belum diimplementasikan." << endl;
+                asuransi.urutkanPolisByRisiko();
                 break;
             case 4:
                 asuransi.tampilkanPolis();
@@ -60,12 +58,14 @@ int main() {
                 getline(cin, nomorPolis);
                 cout << "Masukkan Nama Klaim: ";
                 getline(cin, namaKlaim);
+                if (namaKlaim.empty()) {
+                    cout << "Nama klaim tidak boleh kosong. Menggunakan 'Klaim Umum'." << endl;
+                    namaKlaim = "Klaim Umum";
+                }
                 cout << "Masukkan Jumlah Klaim (dalam Rupiah, tanpa titik atau notasi): ";
                 cin >> jumlahKlaim;
                 cin.ignore();
                 asuransi.tambahKlaim(nomorPolis, namaKlaim, jumlahKlaim);
-                asuransi.saveToCSV(dataPath);
-                asuransi.saveKlaimToCSV(klaimPath);
                 break;
             case 6:
                 asuransi.tampilkanKlaim();
@@ -80,16 +80,25 @@ int main() {
                 asuransi.redo();
                 break;
             case 10:
-                cout << "Keluar dari program." << endl;
+                cout << "Menyimpan data dan keluar dari program." << endl;
                 break;
             default:
                 cout << "Pilihan tidak valid. Silakan coba lagi." << endl;
         }
-        if (pilihan != 10 && !konfirmasiLanjut()) {
-            break;
+        
+        if (pilihan >= 1 && pilihan <= 9 && pilihan != 4 && pilihan != 6) {
+             asuransi.saveToCSV(dataPath);
+             asuransi.saveKlaimToCSV(klaimPath);
         }
+
+        if (pilihan != 10) {
+            if (!konfirmasiLanjut()) break;
+        }
+
     } while (pilihan != 10);
+    
     asuransi.saveToCSV(dataPath);
     asuransi.saveKlaimToCSV(klaimPath);
+    
     return 0;
 }
