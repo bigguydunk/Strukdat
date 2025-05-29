@@ -1,6 +1,7 @@
 #include "../../include/management/polis.hpp"
 #include "../../include/management/xorcipher.hpp"
 #include "../../include/management/encoding.hpp"
+#include "../../include/strukdat/simple_queue.hpp"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -97,16 +98,14 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
     simpanStateUndo();
     bool found = false;
-    for (auto& polis : daftarPolis) {
+    for (const auto& polis : daftarPolis) {
         if (polis.nomorPolis == nomorPolis) {
-            polis.totalKlaim += jumlahKlaim;
-            polis.klaim.push_back(make_pair(namaKlaim, jumlahKlaim));
             found = true;
             break;
         }
     }
     if (found) {
-        antrianKlaim.push(make_pair(nomorPolis, make_pair(namaKlaim, jumlahKlaim)));
+        antrianKlaim.enqueue(make_pair(nomorPolis, make_pair(namaKlaim, jumlahKlaim)));
         cout << "Klaim sebesar Rp" << jumlahKlaim << " untuk \"" << namaKlaim 
              << "\" berhasil ditambahkan ke antrian untuk Nomor Polis: " << nomorPolis << endl;
     } else {
@@ -114,31 +113,22 @@ void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, in
     }
 }
 
-void Asuransi::tampilkanKlaim() const {
-    if (antrianKlaim.empty()) {
-        cout << "Tidak ada klaim dalam antrian." << endl;
-    } else {
-        cout << "Daftar Klaim Kesehatan dalam antrian:" << endl;
-        queue<pair<string, pair<string, int>>> tempQueue = antrianKlaim;
-        while (!tempQueue.empty()) {
-            auto klaim = tempQueue.front();
-            cout << "Nomor Polis: " << klaim.first 
-                 << " | Nama Klaim: " << klaim.second.first 
-                 << " | Klaim: Rp" << klaim.second.second << endl;
-            tempQueue.pop();
-        }
-    }
-}
-
 void Asuransi::prosesKlaim() {
     cout << "Memproses klaim kesehatan:" << endl;
-    while (!antrianKlaim.empty()) {
+    while (!antrianKlaim.isEmpty()) {
         auto klaim = antrianKlaim.front();
+        for (auto& polis : daftarPolis) {
+            if (polis.nomorPolis == klaim.first) {
+                polis.totalKlaim += klaim.second.second;
+                polis.klaim.push_back(make_pair(klaim.second.first, klaim.second.second));
+                break;
+            }
+        }
         cout << "Memproses klaim untuk Nomor Polis: " << klaim.first 
              << " | Nama Klaim: " << klaim.second.first 
              << " | Klaim: Rp" << klaim.second.second << endl;
         klaimDiproses.push_back(klaim);
-        antrianKlaim.pop();
+        antrianKlaim.dequeue();
     }
     cout << "Semua klaim telah diproses." << endl;
 }
@@ -172,15 +162,32 @@ void Asuransi::tampilkanPolis() const {
     }
 }
 
+void Asuransi::tampilkanKlaim() const {
+    if (antrianKlaim.isEmpty()) {
+        std::cout << "Tidak ada klaim dalam antrian." << std::endl;
+    } else {
+        std::cout << "Daftar Klaim Kesehatan dalam antrian:" << std::endl;
+        // Use the new getFrontNode() to iterate without modifying the queue
+        auto node = antrianKlaim.getFrontNode();
+        while (node != nullptr) {
+            const auto& klaim = node->data;
+            std::cout << "Nomor Polis: " << klaim.first
+                      << " | Nama Klaim: " << klaim.second.first
+                      << " | Klaim: Rp" << klaim.second.second << std::endl;
+            node = node->next;
+        }
+    }
+}
+
 void Asuransi::simpanStateUndo() {
     undoStack.push(daftarPolis);
-    while (!redoStack.empty()) {
+    while (!redoStack.isEmpty()) {
         redoStack.pop();
     }
 }
 
 void Asuransi::undo() {
-    if (undoStack.empty()) {
+    if (undoStack.isEmpty()) {
         std::cout << "Tidak ada data untuk di-Undo.\n";
         return;
     }
@@ -191,7 +198,7 @@ void Asuransi::undo() {
 }
 
 void Asuransi::redo() {
-    if (redoStack.empty()) {
+    if (redoStack.isEmpty()) {
         std::cout << "Tidak ada data untuk di-Redo.\n";
         return;
     }

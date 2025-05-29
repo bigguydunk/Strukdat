@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <queue>
-#include <stack>
+#include "../strukdat/simple_queue.hpp"
+#include "../strukdat/simple_stack.hpp"
 
 struct Polis {
     std::string nomorPolis;
@@ -16,12 +16,10 @@ struct Polis {
 class Asuransi {
 private:
     std::vector<Polis> daftarPolis;
-    std::queue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
+    SimpleQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
     std::vector<std::pair<std::string, std::pair<std::string, int>>> klaimDiproses;
-    
-    std::stack<std::vector<Polis>> undoStack;
-    std::stack<std::vector<Polis>> redoStack;
-
+    SimpleStack<std::vector<Polis>> undoStack;
+    SimpleStack<std::vector<Polis>> redoStack;
 public:
     void tambahPolis(const std::string& nama, int umur, int risiko);
     void tambahKlaim(const std::string& nomorPolis, const std::string& namaKlaim, int jumlahKlaim);
