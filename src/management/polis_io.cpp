@@ -15,18 +15,20 @@ void Asuransi::saveKlaimToCSV(const std::string& filename) const {
         return;
     }
     file << "nomorPolis|namaKlaim|jumlahKlaim\n";
-    for (const auto& polis : daftarPolis) {
-        for (const auto& klaim : polis.klaim) {
-            std::string namaKlaimTerenkripsi = xorcipher(klaim.first, secretkey);
+    for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
+        const Polis& polis = node->data;
+        for (PolisKlaim* klaim = polis.klaimHead; klaim; klaim = klaim->next) {
+            std::string namaKlaimTerenkripsi = xorcipher(klaim->namaKlaim, secretkey);
             std::string namaKlaimHex = to_hex(namaKlaimTerenkripsi);
-            file << polis.nomorPolis << '|' << namaKlaimHex << '|' << klaim.second << "\n";
+            file << polis.nomorPolis << '|' << namaKlaimHex << '|' << klaim->jumlahKlaim << "\n";
         }
     }
 }
 
 void Asuransi::loadKlaimFromCSV(const std::string& filename) {
-    for (auto& polis : daftarPolis) {
-        polis.klaim.clear();
+    for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
+        Polis& polis = node->data;
+        polis.clearKlaim();
     }
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -57,9 +59,10 @@ void Asuransi::loadKlaimFromCSV(const std::string& filename) {
         
         try {
             int jumlahKlaim = std::stoi(jumlahKlaimStr);
-            for (auto& polis : daftarPolis) {
+            for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
+                Polis& polis = node->data;
                 if (polis.nomorPolis == nomorPolis) {
-                    polis.klaim.push_back(std::make_pair(namaKlaimAsli, jumlahKlaim));
+                    polis.addKlaim(namaKlaimAsli, jumlahKlaim);
                     break;
                 }
             }

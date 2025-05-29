@@ -2,11 +2,15 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Iinclude -g -fdiagnostics-color=always
 
 SRC = src/main.cpp \
-	src/menu.cpp \
-	src/management/polis.cpp \
-	src/management/polis_io.cpp \
-	src/management/xorcipher.cpp \
-	src/management/encoding.cpp
+    src/menu.cpp \
+    src/management/polis.cpp \
+    src/management/polis_io.cpp \
+    src/management/xorcipher.cpp \
+    src/management/encoding.cpp \
+    strukdat/simple_queue.cpp \
+    strukdat/polis_list.cpp \
+    strukdat/simple_stack.cpp \
+    strukdat/polis_list_sort.cpp
 
 TARGET = main.exe
 
@@ -16,6 +20,6 @@ $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	del /f main.exe
 
 .PHONY: all clean

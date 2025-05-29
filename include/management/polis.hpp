@@ -1,27 +1,16 @@
 #pragma once
 #include <string>
-#include <vector>
-#include <queue>
-#include <stack>
-
-struct Polis {
-    std::string nomorPolis;
-    std::string nama;
-    int umur;
-    int risiko;
-    int totalKlaim;
-    std::vector<std::pair<std::string, int>> klaim;
-};
+#include "../strukdat/polis_list.hpp"
+#include "../strukdat/simple_queue.hpp"
+#include "../strukdat/simple_stack.hpp"
 
 class Asuransi {
 private:
-    std::vector<Polis> daftarPolis;
-    std::queue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
-    std::vector<std::pair<std::string, std::pair<std::string, int>>> klaimDiproses;
-    
-    std::stack<std::vector<Polis>> undoStack;
-    std::stack<std::vector<Polis>> redoStack;
-
+    PolisList daftarPolis;
+    SimpleQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
+    PolisList klaimDiproses;
+    SimpleStack<PolisList> undoStack;
+    SimpleStack<PolisList> redoStack;
 public:
     void tambahPolis(const std::string& nama, int umur, int risiko);
     void tambahKlaim(const std::string& nomorPolis, const std::string& namaKlaim, int jumlahKlaim);
@@ -37,6 +26,6 @@ public:
     void undo();
     void redo();
     void simpanStateUndo();
-    std::vector<Polis>& getDaftarPolis() { return daftarPolis; }
-    const std::vector<Polis>& getDaftarPolis() const { return daftarPolis; }
+    PolisList& getDaftarPolis() { return daftarPolis; }
+    const PolisList& getDaftarPolis() const { return daftarPolis; }
 };
