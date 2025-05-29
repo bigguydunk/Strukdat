@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 #include "../strukdat/polis_list.hpp"
 #include "../strukdat/simple_queue.hpp"
 #include "../strukdat/simple_stack.hpp"
@@ -11,6 +12,7 @@ private:
     PolisList klaimDiproses;
     SimpleStack<PolisList> undoStack;
     SimpleStack<PolisList> redoStack;
+    std::unordered_map<std::string, Polis*> nomorPolisMap; // Fast lookup for nomorPolis
 public:
     void tambahPolis(const std::string& nama, int umur, int risiko);
     void tambahKlaim(const std::string& nomorPolis, const std::string& namaKlaim, int jumlahKlaim);

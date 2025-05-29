@@ -8,12 +8,14 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <unordered_map>
 
 using namespace std;
 const string SECRET_KEY = "adamsepuh";
 
 void Asuransi::loadFromCSV(const string& filename) {
     daftarPolis.clear();
+    nomorPolisMap.clear();
     ifstream file(filename);
     if (!file.is_open()) {
         return;
@@ -51,6 +53,10 @@ void Asuransi::loadFromCSV(const string& filename) {
             p.risiko = stoi(risikoStr);
             p.totalKlaim = stoi(totalKlaimStr);
             daftarPolis.push_back(p);
+            // Traverse to last node to get pointer
+            PolisList::Node* last = daftarPolis.begin();
+            while (last && last->next) last = last->next;
+            if (last) nomorPolisMap[p.nomorPolis] = &last->data;
         } catch (const std::exception& e) {
             continue;
         }
@@ -88,8 +94,15 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
         asciiPart += to_string(static_cast<int>(upperChar));
     }
     string nomorPolis = asciiPart + to_string(umur) + to_string(risiko);
+    // Ensure nomorPolis is unique by incrementing if needed
+    string uniqueNomorPolis = nomorPolis;
+    while (nomorPolisMap.find(uniqueNomorPolis) != nomorPolisMap.end()) {
+        long long num = stoll(uniqueNomorPolis);
+        ++num;
+        uniqueNomorPolis = to_string(num);
+    }
     Polis polis;
-    polis.nomorPolis = nomorPolis;
+    polis.nomorPolis = uniqueNomorPolis;
     polis.nama = nama;
     polis.umur = umur;
     polis.risiko = risiko;
@@ -97,20 +110,17 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     polis.klaimHead = nullptr;
     polis.klaimCount = 0;
     daftarPolis.push_back(polis);
-    cout << "Polis berhasil ditambahkan dengan Nomor Polis: " << nomorPolis << endl;
+    // Traverse to last node to get pointer
+    PolisList::Node* last = daftarPolis.begin();
+    while (last && last->next) last = last->next;
+    if (last) nomorPolisMap[uniqueNomorPolis] = &last->data;
+    cout << "Polis berhasil ditambahkan dengan Nomor Polis: " << uniqueNomorPolis << endl;
 }
 
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
     simpanStateUndo();
-    bool found = false;
-    for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
-        Polis& polis = node->data;
-        if (polis.nomorPolis == nomorPolis) {
-            found = true;
-            break;
-        }
-    }
-    if (found) {
+    auto it = nomorPolisMap.find(nomorPolis);
+    if (it != nomorPolisMap.end()) {
         antrianKlaim.enqueue(make_pair(nomorPolis, make_pair(namaKlaim, jumlahKlaim)));
         cout << "Klaim sebesar Rp" << jumlahKlaim << " untuk \"" << namaKlaim 
              << "\" berhasil ditambahkan ke antrian untuk Nomor Polis: " << nomorPolis << endl;
@@ -123,50 +133,54 @@ void Asuransi::prosesKlaim() {
     cout << "Memproses klaim kesehatan:" << endl;
     while (!antrianKlaim.isEmpty()) {
         auto klaim = antrianKlaim.front();
-        // FIX: Use manual traversal for custom PolisList, not range-based for
-        for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
-            Polis& polis = node->data;
-            if (polis.nomorPolis == klaim.first) {
-                polis.totalKlaim += klaim.second.second;
-                polis.addKlaim(klaim.second.first, klaim.second.second);
-                break;
-            }
+        auto it = nomorPolisMap.find(klaim.first);
+        if (it != nomorPolisMap.end()) {
+            Polis* polis = it->second;
+            polis->totalKlaim += klaim.second.second;
+            polis->addKlaim(klaim.second.first, klaim.second.second);
         }
         cout << "Memproses klaim untuk Nomor Polis: " << klaim.first 
              << " | Nama Klaim: " << klaim.second.first 
              << " | Klaim: Rp" << klaim.second.second << endl;
-        // Optionally, you can store processed claims in klaimDiproses if needed
         antrianKlaim.dequeue();
     }
     cout << "Semua klaim telah diproses." << endl;
 }
 
 void Asuransi::tampilkanPolis() const {
-    cout << left << setw(15) << "Nomor Polis" 
-         << left << setw(20) << "| Nama" 
-         << left << setw(10) << "| Umur" 
-         << left << setw(10) << "| Risiko" 
-         << left << setw(20) << "| Total Klaim" 
+    // Column widths
+    const int wPolis = 15, wNama = 20, wUmur = 10, wRisiko = 10, wKlaim = 20;
+    cout << left << setw(wPolis) << "Nomor Polis"
+         << left << setw(wNama) << "| Nama"
+         << left << setw(wUmur) << "| Umur"
+         << left << setw(wRisiko) << "| Risiko"
+         << left << setw(wKlaim) << "| Total Klaim"
          << left << "| Klaim Detail" << endl;
-    cout << "----------------------------------------------------------------------------------------------------" << endl;
+    cout << string(100, '-') << endl;
     for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
         const Polis& polis = node->data;
-        cout << left << setw(15) << polis.nomorPolis 
-             << left << "| " << setw(18) << polis.nama 
-             << left << "| " << setw(8) << polis.umur 
-             << left << "| " << setw(8) << polis.risiko 
-             << left << "| Rp" << setw(16) << polis.totalKlaim;
-        if (polis.klaimHead) {
-            cout << " | ";
-            int i = 0;
-            for (PolisKlaim* k = polis.klaimHead; k; k = k->next, ++i) {
-                cout << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")";
-                if (k->next) cout << ", ";
+        PolisKlaim* k = polis.klaimHead;
+        // Print first line (with first claim or 'Tidak ada klaim')
+        cout << left << setw(wPolis) << polis.nomorPolis
+             << left << setw(wNama) << "| " + polis.nama
+             << left << setw(wUmur) << "| " + to_string(polis.umur)
+             << left << setw(wRisiko) << "| " + to_string(polis.risiko)
+             << left << setw(wKlaim) << "| Rp" + to_string(polis.totalKlaim)
+             << "| ";
+        if (k) {
+            cout << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
+            k = k->next;
+            // Print remaining claims, one per line, with columns padded
+            while (k) {
+                cout << setw(wPolis) << " " << setw(wNama) << "|" << setw(wUmur) << "|" << setw(wRisiko) << "|" << setw(wKlaim) << "|" << "| "
+                     << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
+                k = k->next;
             }
         } else {
-            cout << " | Tidak ada klaim";
+            cout << "Tidak ada klaim" << endl;
         }
-        cout << endl;
+        // Print separator line after each polis
+        cout << string(100, '-') << endl;
     }
 }
 
