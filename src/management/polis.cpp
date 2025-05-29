@@ -8,12 +8,14 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
+#include <unordered_map>
 
 using namespace std;
 const string SECRET_KEY = "adamsepuh";
 
 void Asuransi::loadFromCSV(const string& filename) {
     daftarPolis.clear();
+    nomorPolisMap.clear();
     ifstream file(filename);
     if (!file.is_open()) {
         return;
@@ -51,6 +53,10 @@ void Asuransi::loadFromCSV(const string& filename) {
             p.risiko = stoi(risikoStr);
             p.totalKlaim = stoi(totalKlaimStr);
             daftarPolis.push_back(p);
+            // Traverse to last node to get pointer
+            PolisList::Node* last = daftarPolis.begin();
+            while (last && last->next) last = last->next;
+            if (last) nomorPolisMap[p.nomorPolis] = &last->data;
         } catch (const std::exception& e) {
             continue;
         }
@@ -90,20 +96,11 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     string nomorPolis = asciiPart + to_string(umur) + to_string(risiko);
     // Ensure nomorPolis is unique by incrementing if needed
     string uniqueNomorPolis = nomorPolis;
-    bool duplicate;
-    do {
-        duplicate = false;
-        for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
-            if (node->data.nomorPolis == uniqueNomorPolis) {
-                // Increment as integer
-                long long num = stoll(uniqueNomorPolis);
-                ++num;
-                uniqueNomorPolis = to_string(num);
-                duplicate = true;
-                break;
-            }
-        }
-    } while (duplicate);
+    while (nomorPolisMap.find(uniqueNomorPolis) != nomorPolisMap.end()) {
+        long long num = stoll(uniqueNomorPolis);
+        ++num;
+        uniqueNomorPolis = to_string(num);
+    }
     Polis polis;
     polis.nomorPolis = uniqueNomorPolis;
     polis.nama = nama;
@@ -113,20 +110,17 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     polis.klaimHead = nullptr;
     polis.klaimCount = 0;
     daftarPolis.push_back(polis);
+    // Traverse to last node to get pointer
+    PolisList::Node* last = daftarPolis.begin();
+    while (last && last->next) last = last->next;
+    if (last) nomorPolisMap[uniqueNomorPolis] = &last->data;
     cout << "Polis berhasil ditambahkan dengan Nomor Polis: " << uniqueNomorPolis << endl;
 }
 
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
     simpanStateUndo();
-    bool found = false;
-    for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
-        Polis& polis = node->data;
-        if (polis.nomorPolis == nomorPolis) {
-            found = true;
-            break;
-        }
-    }
-    if (found) {
+    auto it = nomorPolisMap.find(nomorPolis);
+    if (it != nomorPolisMap.end()) {
         antrianKlaim.enqueue(make_pair(nomorPolis, make_pair(namaKlaim, jumlahKlaim)));
         cout << "Klaim sebesar Rp" << jumlahKlaim << " untuk \"" << namaKlaim 
              << "\" berhasil ditambahkan ke antrian untuk Nomor Polis: " << nomorPolis << endl;
@@ -139,19 +133,15 @@ void Asuransi::prosesKlaim() {
     cout << "Memproses klaim kesehatan:" << endl;
     while (!antrianKlaim.isEmpty()) {
         auto klaim = antrianKlaim.front();
-        // FIX: Use manual traversal for custom PolisList, not range-based for
-        for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
-            Polis& polis = node->data;
-            if (polis.nomorPolis == klaim.first) {
-                polis.totalKlaim += klaim.second.second;
-                polis.addKlaim(klaim.second.first, klaim.second.second);
-                break;
-            }
+        auto it = nomorPolisMap.find(klaim.first);
+        if (it != nomorPolisMap.end()) {
+            Polis* polis = it->second;
+            polis->totalKlaim += klaim.second.second;
+            polis->addKlaim(klaim.second.first, klaim.second.second);
         }
         cout << "Memproses klaim untuk Nomor Polis: " << klaim.first 
              << " | Nama Klaim: " << klaim.second.first 
              << " | Klaim: Rp" << klaim.second.second << endl;
-        // Optionally, you can store processed claims in klaimDiproses if needed
         antrianKlaim.dequeue();
     }
     cout << "Semua klaim telah diproses." << endl;
