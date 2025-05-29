@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <stack>
 
 struct Polis {
     std::string nomorPolis;
@@ -17,6 +18,10 @@ private:
     std::vector<Polis> daftarPolis;
     std::queue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
     std::vector<std::pair<std::string, std::pair<std::string, int>>> klaimDiproses;
+    
+    std::stack<std::vector<Polis>> undoStack;
+    std::stack<std::vector<Polis>> redoStack;
+
 public:
     void tambahPolis(const std::string& nama, int umur, int risiko);
     void tambahKlaim(const std::string& nomorPolis, const std::string& namaKlaim, int jumlahKlaim);
@@ -27,6 +32,9 @@ public:
     void saveToCSV(const std::string& filename) const;
     void loadKlaimFromCSV(const std::string& filename);
     void saveKlaimToCSV(const std::string& filename) const;
+    void undo();
+    void redo();
+    void simpanStateUndo();
     std::vector<Polis>& getDaftarPolis() { return daftarPolis; }
     const std::vector<Polis>& getDaftarPolis() const { return daftarPolis; }
 };
