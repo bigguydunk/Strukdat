@@ -1,7 +1,6 @@
 #pragma once
 #include <stdexcept>
-#include <vector>
-#include <string>
+#include "polis_list.hpp"
 
 // Forward declaration for Polis
 struct Polis;

@@ -1,7 +1,6 @@
 #include "../include/strukdat/simple_stack.hpp"
 #include <stdexcept>
-#include <vector>
-#include <string>
+#include "../include/strukdat/polis_list.hpp"
 #include "../include/management/polis.hpp"
 
 // Node constructor
@@ -55,4 +54,4 @@ void SimpleStack<T>::clear() {
 }
 
 // Explicit instantiation for the types used in your project
-template class SimpleStack<std::vector<Polis>>;
+template class SimpleStack<PolisList>;
