@@ -1,6 +1,6 @@
 #include "../include/strukdat/polis_list_sort.hpp"
 
-// Simple bubble sort for singly linked list (in-place)
+// ini bubble sort
 void sortPolisListByUmur(PolisList& list) {
     if (!list.head || !list.head->next) return;
     bool swapped;
@@ -11,7 +11,7 @@ void sortPolisListByUmur(PolisList& list) {
         while (curr && curr->next) {
             PolisList::Node* next = curr->next;
             if (curr->data.umur > next->data.umur) {
-                // Swap nodes
+                // Swap
                 if (prev) prev->next = next;
                 else list.head = next;
                 curr->next = next->next;

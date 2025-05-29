@@ -88,8 +88,24 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
         asciiPart += to_string(static_cast<int>(upperChar));
     }
     string nomorPolis = asciiPart + to_string(umur) + to_string(risiko);
+    // Ensure nomorPolis is unique by incrementing if needed
+    string uniqueNomorPolis = nomorPolis;
+    bool duplicate;
+    do {
+        duplicate = false;
+        for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
+            if (node->data.nomorPolis == uniqueNomorPolis) {
+                // Increment as integer
+                long long num = stoll(uniqueNomorPolis);
+                ++num;
+                uniqueNomorPolis = to_string(num);
+                duplicate = true;
+                break;
+            }
+        }
+    } while (duplicate);
     Polis polis;
-    polis.nomorPolis = nomorPolis;
+    polis.nomorPolis = uniqueNomorPolis;
     polis.nama = nama;
     polis.umur = umur;
     polis.risiko = risiko;
@@ -97,7 +113,7 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     polis.klaimHead = nullptr;
     polis.klaimCount = 0;
     daftarPolis.push_back(polis);
-    cout << "Polis berhasil ditambahkan dengan Nomor Polis: " << nomorPolis << endl;
+    cout << "Polis berhasil ditambahkan dengan Nomor Polis: " << uniqueNomorPolis << endl;
 }
 
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
@@ -142,31 +158,39 @@ void Asuransi::prosesKlaim() {
 }
 
 void Asuransi::tampilkanPolis() const {
-    cout << left << setw(15) << "Nomor Polis" 
-         << left << setw(20) << "| Nama" 
-         << left << setw(10) << "| Umur" 
-         << left << setw(10) << "| Risiko" 
-         << left << setw(20) << "| Total Klaim" 
+    // Column widths
+    const int wPolis = 15, wNama = 20, wUmur = 10, wRisiko = 10, wKlaim = 20;
+    cout << left << setw(wPolis) << "Nomor Polis"
+         << left << setw(wNama) << "| Nama"
+         << left << setw(wUmur) << "| Umur"
+         << left << setw(wRisiko) << "| Risiko"
+         << left << setw(wKlaim) << "| Total Klaim"
          << left << "| Klaim Detail" << endl;
-    cout << "----------------------------------------------------------------------------------------------------" << endl;
+    cout << string(100, '-') << endl;
     for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
         const Polis& polis = node->data;
-        cout << left << setw(15) << polis.nomorPolis 
-             << left << "| " << setw(18) << polis.nama 
-             << left << "| " << setw(8) << polis.umur 
-             << left << "| " << setw(8) << polis.risiko 
-             << left << "| Rp" << setw(16) << polis.totalKlaim;
-        if (polis.klaimHead) {
-            cout << " | ";
-            int i = 0;
-            for (PolisKlaim* k = polis.klaimHead; k; k = k->next, ++i) {
-                cout << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")";
-                if (k->next) cout << ", ";
+        PolisKlaim* k = polis.klaimHead;
+        // Print first line (with first claim or 'Tidak ada klaim')
+        cout << left << setw(wPolis) << polis.nomorPolis
+             << left << setw(wNama) << "| " + polis.nama
+             << left << setw(wUmur) << "| " + to_string(polis.umur)
+             << left << setw(wRisiko) << "| " + to_string(polis.risiko)
+             << left << setw(wKlaim) << "| Rp" + to_string(polis.totalKlaim)
+             << "| ";
+        if (k) {
+            cout << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
+            k = k->next;
+            // Print remaining claims, one per line, with columns padded
+            while (k) {
+                cout << setw(wPolis) << " " << setw(wNama) << "|" << setw(wUmur) << "|" << setw(wRisiko) << "|" << setw(wKlaim) << "|" << "| "
+                     << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
+                k = k->next;
             }
         } else {
-            cout << " | Tidak ada klaim";
+            cout << "Tidak ada klaim" << endl;
         }
-        cout << endl;
+        // Print separator line after each polis
+        cout << string(100, '-') << endl;
     }
 }
 
