@@ -2,9 +2,43 @@
 #include "../include/menu.hpp"
 #include <iostream>
 #include <string>
+#include <conio.h>
 using namespace std;
 
 int main() {
+    cout << R"(
+                        :::::::::::.                  
+                   .:::::::     .:::::::.             
+             .:::::::::              :::::::::        
+         ::::::::                         .:::::::.   
+      ::::::                                   .::::: 
+      :::                                          :::
+      :::                                         .::.
+      :::                                         ::: 
+      ::::                 .::::                  ::: 
+       :::                 .::::                  ::. 
+       :::                 .::::                 :::  
+        :::                .::::                 ::.  
+        .::         :::::::::::::::::::         :::   
+         :::        :::::::::::::::::::        :::.   
+          :::              .::::               ::.    
+           :::              ::::              :::     
+            :::             ::::            .:::      
+            .:::            ::::            :::      
+              :::                         .:::      
+               :::                       ::::         
+                ::::                    :::           
+                  :::.                ::::            
+                   ::::             ::::              
+                     :::::        ::::.               
+                       ::::.    ::::         
+                         :::::::::           
+                            :::.                      
+)";
+    cout << "\nSelamat datang di Aplikasi Pengelolaan Asuransi Kesehatan Sederhana!\n\n";
+    cout << "Tekan apa saja untuk melanjutkan...";
+    _getch();
+     cout << "\n\n\n";
     Asuransi asuransi;
     
     std::string dataPath = "data/polis.csv";
