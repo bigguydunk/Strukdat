@@ -1,6 +1,7 @@
-#include "../../include/management/polis.hpp"
-#include "../../include/management/xorcipher.hpp"
-#include "../../include/management/encoding.hpp"
+#include "../../include/polis/polis.hpp"
+#include "../../include/strukdat/xorcipher.hpp"
+#include "../../include/strukdat/encoding.hpp"
+#include "strukdat/strukdat_queue.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>

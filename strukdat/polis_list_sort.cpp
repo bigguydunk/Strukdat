@@ -1,7 +1,7 @@
 #include "../include/strukdat/polis_list_sort.hpp"
 
 // ini bubble sort
-void sortPolisListByUmur(PolisList& list) {
+void UmurSort(PolisList& list) {
     if (!list.head || !list.head->next) return;
     bool swapped;
     do {
@@ -11,7 +11,7 @@ void sortPolisListByUmur(PolisList& list) {
         while (curr && curr->next) {
             PolisList::Node* next = curr->next;
             if (curr->data.umur > next->data.umur) {
-                // Swap
+
                 if (prev) prev->next = next;
                 else list.head = next;
                 curr->next = next->next;
@@ -26,7 +26,7 @@ void sortPolisListByUmur(PolisList& list) {
     } while (swapped);
 }
 
-void sortPolisListByRisiko(PolisList& list) {
+void RisikoSort(PolisList& list) {
     if (!list.head || !list.head->next) return;
     bool swapped;
     do {
@@ -36,7 +36,6 @@ void sortPolisListByRisiko(PolisList& list) {
         while (curr && curr->next) {
             PolisList::Node* next = curr->next;
             if (curr->data.risiko > next->data.risiko) {
-                // Swap nodes
                 if (prev) prev->next = next;
                 else list.head = next;
                 curr->next = next->next;

@@ -1,4 +1,4 @@
-#include "../../include/management/xorcipher.hpp"
+#include "../include/strukdat/xorcipher.hpp"
 using namespace std;
 string xorcipher(const string& data, const string& key) {
   if (key.empty()) {

@@ -2,24 +2,24 @@
 #include <string>
 #include <unordered_map>
 #include "../strukdat/polis_list.hpp"
-#include "../strukdat/simple_queue.hpp"
-#include "../strukdat/simple_stack.hpp"
+#include "strukdat/strukdat_queue.hpp"
+#include "strukdat/strukdat_stack.hpp"
 
 struct AsuransiState {
     PolisList daftarPolis;
-    SimpleQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
+    StrukdatQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
     AsuransiState() = default;
-    AsuransiState(const PolisList& p, const SimpleQueue<std::pair<std::string, std::pair<std::string, int>>>& q)
+    AsuransiState(const PolisList& p, const StrukdatQueue<std::pair<std::string, std::pair<std::string, int>>>& q)
         : daftarPolis(p), antrianKlaim(q) {}
 };
 
 class Asuransi {
 private:
     PolisList daftarPolis;
-    SimpleQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
+    StrukdatQueue<std::pair<std::string, std::pair<std::string, int>>> antrianKlaim;
     PolisList klaimDiproses;
-    SimpleStack<AsuransiState> undoStack;
-    SimpleStack<AsuransiState> redoStack;
+    StrukdatStack<AsuransiState> undoStack;
+    StrukdatStack<AsuransiState> redoStack;
     std::unordered_map<std::string, Polis*> nomorPolisMap; // hashmap
 public:
     void tambahPolis(const std::string& nama, int umur, int risiko);

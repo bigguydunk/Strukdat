@@ -6,7 +6,7 @@
 struct Polis;
 
 template <typename T>
-class SimpleStack {
+class StrukdatStack {
     struct Node {
         T data;
         Node* next;
@@ -15,8 +15,8 @@ class SimpleStack {
     Node* topPtr;
     int count;
 public:
-    SimpleStack();
-    ~SimpleStack();
+    StrukdatStack();
+    ~StrukdatStack();
     void push(const T& val);
     void pop();
     T& top();

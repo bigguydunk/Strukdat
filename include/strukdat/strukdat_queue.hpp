@@ -3,7 +3,7 @@
 #include <string>
 
 template <typename T>
-class SimpleQueue {
+class StrukdatQueue {
     struct Node {
         T data;
         Node* next;
@@ -13,10 +13,10 @@ class SimpleQueue {
     Node* backPtr;
     int count;
 public:
-    SimpleQueue();
-    SimpleQueue(const SimpleQueue& other);
-    ~SimpleQueue();
-    SimpleQueue& operator=(const SimpleQueue& other);
+    StrukdatQueue();
+    StrukdatQueue(const StrukdatQueue& other);
+    ~StrukdatQueue();
+    StrukdatQueue& operator=(const StrukdatQueue& other);
     void enqueue(const T& val);
     void dequeue();
     T& front();

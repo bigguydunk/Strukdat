@@ -1,8 +1,9 @@
-#include "../../include/management/polis.hpp"
-#include "../../include/management/xorcipher.hpp"
-#include "../../include/management/encoding.hpp"
-#include "../../include/strukdat/simple_queue.hpp"
+#include "../../include/polis/polis.hpp"
+#include "../../include/strukdat/xorcipher.hpp"
+#include "../../include/strukdat/encoding.hpp"
 #include "../../include/strukdat/polis_list_sort.hpp"
+#include "../../include/strukdat/strukdat_queue.hpp"
+#include "../../include/strukdat/strukdat_stack.hpp"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -19,6 +20,7 @@ void Asuransi::loadFromCSV(const string& filename) {
     nomorPolisMap.clear();
     ifstream file(filename);
     if (!file.is_open()) {
+        cout << "[ERROR] File tidak dapat dibuka: " << filename << endl;
         return;
     }
     string line;
@@ -54,7 +56,6 @@ void Asuransi::loadFromCSV(const string& filename) {
             p.risiko = stoi(risikoStr);
             p.totalKlaim = stoi(totalKlaimStr);
             daftarPolis.push_back(p);
-            // Traverse to last node to get pointer
             PolisList::Node* last = daftarPolis.begin();
             while (last && last->next) last = last->next;
             if (last) nomorPolisMap[p.nomorPolis] = &last->data;
@@ -77,25 +78,29 @@ void Asuransi::saveToCSV(const string& filename) const {
 
 void Asuransi::urutkanPolisByUmur() {
     simpanStateUndo();
-    sortPolisListByUmur(daftarPolis);
+    UmurSort(daftarPolis);
     cout << "Polis berhasil diurutkan berdasarkan umur (termuda ke tertua)." << endl;
 }
 
 void Asuransi::urutkanPolisByRisiko() {
     simpanStateUndo();
-    sortPolisListByRisiko(daftarPolis);
+    RisikoSort(daftarPolis);
     cout << "Polis berhasil diurutkan berdasarkan risiko (terendah ke tertinggi)." << endl;
 }
 
 void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     simpanStateUndo();
+    if (nama.empty() || umur <= 0 || risiko < 0) {
+        cout << "Input tidak sesuai format. Nama tidak boleh kosong, umur > 0, risiko >= 0." << endl;
+        return;
+    }
     string asciiPart;
     for (int i = 0; i < 3 && i < nama.size(); ++i) {
         char upperChar = toupper(nama[i]);
         asciiPart += to_string(static_cast<int>(upperChar));
     }
     string nomorPolis = asciiPart + to_string(umur) + to_string(risiko);
-    // Ensure nomorPolis is unique by incrementing if needed
+    // agar nomor polis tidak duplikat
     string uniqueNomorPolis = nomorPolis;
     while (nomorPolisMap.find(uniqueNomorPolis) != nomorPolisMap.end()) {
         long long num = stoll(uniqueNomorPolis);
@@ -111,7 +116,6 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
     polis.klaimHead = nullptr;
     polis.klaimCount = 0;
     daftarPolis.push_back(polis);
-    // Traverse to last node to get pointer
     PolisList::Node* last = daftarPolis.begin();
     while (last && last->next) last = last->next;
     if (last) nomorPolisMap[uniqueNomorPolis] = &last->data;
@@ -120,6 +124,10 @@ void Asuransi::tambahPolis(const string& nama, int umur, int risiko) {
 
 void Asuransi::tambahKlaim(const string& nomorPolis, const string& namaKlaim, int jumlahKlaim) {
     simpanStateUndo();
+    if (nomorPolis.empty() || namaKlaim.empty() || jumlahKlaim <= 0) {
+        cout << "Input tidak sesuai format. Nomor polis/nama klaim tidak boleh kosong, jumlah klaim > 0." << endl;
+        return;
+    }
     auto it = nomorPolisMap.find(nomorPolis);
     if (it != nomorPolisMap.end()) {
         antrianKlaim.enqueue(make_pair(nomorPolis, make_pair(namaKlaim, jumlahKlaim)));
@@ -145,6 +153,12 @@ void Asuransi::prosesKlaim() {
         cout << "Pilih opsi: ";
         int opsi;
         cin >> opsi;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Input tidak sesuai format. Silakan masukkan angka." << endl;
+            continue;
+        }
         if (opsi == 2) { // Accept all
             simpanStateUndo();
             cout << "Memproses semua klaim kesehatan:\n";
@@ -170,8 +184,7 @@ void Asuransi::prosesKlaim() {
             }
             cout << "Semua klaim telah dihapus dari antrian.\n";
             break;
-        } else if (opsi == 1 || opsi == 3) { // Accept one or Delete one
-            // List all claims with index
+        } else if (opsi == 1 || opsi == 3) { 
             vector<pair<string, pair<string, int>>> daftarKlaim;
             auto node = antrianKlaim.getFrontNode();
             int idx = 1;
@@ -192,18 +205,24 @@ void Asuransi::prosesKlaim() {
             cout << "Pilih nomor klaim yang ingin diproses: ";
             int pilih;
             cin >> pilih;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(10000, '\n');
+                cout << "Input tidak sesuai format. Silakan masukkan angka." << endl;
+                continue;
+            }
             if (pilih < 1 || pilih > (int)daftarKlaim.size()) {
                 cout << "Pilihan tidak valid.\n";
                 continue;
             }
             simpanStateUndo();
-            // Remove the selected claim from the queue
-            SimpleQueue<pair<string, pair<string, int>>> tempQueue;
+
+            StrukdatQueue<std::pair<std::string, std::pair<std::string, int>>> tempQueue;
             node = antrianKlaim.getFrontNode();
             idx = 1;
             while (node != nullptr) {
                 if (idx == pilih) {
-                    if (opsi == 1) { // Accept one
+                    if (opsi == 1) { 
                         auto& klaim = node->data;
                         auto it = nomorPolisMap.find(klaim.first);
                         if (it != nomorPolisMap.end()) {
@@ -214,13 +233,12 @@ void Asuransi::prosesKlaim() {
                         cout << "Klaim diterima untuk Nomor Polis: " << klaim.first
                              << " | Nama Klaim: " << klaim.second.first
                              << " | Klaim: Rp" << klaim.second.second << endl;
-                    } else if (opsi == 3) { // Delete one
+                    } else if (opsi == 3) { 
                         auto& klaim = node->data;
                         cout << "Klaim dihapus untuk Nomor Polis: " << klaim.first
                              << " | Nama Klaim: " << klaim.second.first
                              << " | Klaim: Rp" << klaim.second.second << endl;
                     }
-                    // Do not enqueue this claim (removes it)
                 } else {
                     tempQueue.enqueue(node->data);
                 }
@@ -228,11 +246,20 @@ void Asuransi::prosesKlaim() {
                 ++idx;
             }
             antrianKlaim = tempQueue;
-            // After processing one, ask if want to continue
             cout << "Apakah ingin memproses klaim lain? (y/n): ";
             char lanjut;
             cin >> lanjut;
-            if (lanjut != 'y' && lanjut != 'Y') break;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(10000, '\n');
+                cout << "Input tidak sesuai format. Silakan masukkan y/n." << endl;
+                continue;
+            }
+            if (lanjut != 'y' && lanjut != 'Y' && lanjut != 'n' && lanjut != 'N') {
+                cout << "Pilihan tidak valid. Silakan masukkan y/n." << endl;
+                continue;
+            }
+            if (lanjut == 'n' || lanjut == 'N') break;
         } else if (opsi == 5) {
             break;
         } else {
@@ -242,8 +269,7 @@ void Asuransi::prosesKlaim() {
 }
 
 void Asuransi::tampilkanPolis() const {
-    // Column widths
-    const int wPolis = 15, wNama = 20, wUmur = 10, wRisiko = 10, wKlaim = 20;
+    const int wPolis = 15, wNama = 20, wUmur = 10, wRisiko = 10, wKlaim = 20; // setara lebar
     cout << left << setw(wPolis) << "Nomor Polis"
          << left << setw(wNama) << "| Nama"
          << left << setw(wUmur) << "| Umur"
@@ -254,7 +280,7 @@ void Asuransi::tampilkanPolis() const {
     for (PolisList::Node* node = daftarPolis.begin(); node; node = node->next) {
         const Polis& polis = node->data;
         PolisKlaim* k = polis.klaimHead;
-        // Print first line (with first claim or 'Tidak ada klaim')
+        // baris pertama
         cout << left << setw(wPolis) << polis.nomorPolis
              << left << setw(wNama) << "| " + polis.nama
              << left << setw(wUmur) << "| " + to_string(polis.umur)
@@ -264,7 +290,6 @@ void Asuransi::tampilkanPolis() const {
         if (k) {
             cout << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
             k = k->next;
-            // Print remaining claims, one per line, with columns padded
             while (k) {
                 cout << setw(wPolis) << " " << setw(wNama) << "|" << setw(wUmur) << "|" << setw(wRisiko) << "|" << setw(wKlaim) << "|" << "| "
                      << "- " << k->namaKlaim << " (Rp" << k->jumlahKlaim << ")" << endl;
@@ -273,7 +298,6 @@ void Asuransi::tampilkanPolis() const {
         } else {
             cout << "Tidak ada klaim" << endl;
         }
-        // Print separator line after each polis
         cout << string(100, '-') << endl;
     }
 }
@@ -283,7 +307,6 @@ void Asuransi::tampilkanKlaim() const {
         std::cout << "Tidak ada klaim dalam antrian." << std::endl;
     } else {
         std::cout << "Daftar Klaim Kesehatan dalam antrian:" << std::endl;
-        // Use the new getFrontNode() to iterate without modifying the queue
         auto node = antrianKlaim.getFrontNode();
         while (node != nullptr) {
             const auto& klaim = node->data;

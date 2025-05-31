@@ -1,24 +1,22 @@
-#include "../include/strukdat/simple_queue.hpp"
+#include "strukdat/strukdat_queue.hpp"
 #include <stdexcept>
 #include <string>
 
-// Node constructor
-
-// Implementation for SimpleQueue
+// node constructor
 
 template <typename T>
-SimpleQueue<T>::Node::Node(const T& val) : data(val), next(nullptr) {}
+StrukdatQueue<T>::Node::Node(const T& val) : data(val), next(nullptr) {}
 
 template <typename T>
-SimpleQueue<T>::SimpleQueue() : frontPtr(nullptr), backPtr(nullptr), count(0) {}
+StrukdatQueue<T>::StrukdatQueue() : frontPtr(nullptr), backPtr(nullptr), count(0) {}
 
 template <typename T>
-SimpleQueue<T>::~SimpleQueue() {
+StrukdatQueue<T>::~StrukdatQueue() {
     while (!isEmpty()) dequeue();
 }
 
 template <typename T>
-void SimpleQueue<T>::enqueue(const T& val) {
+void StrukdatQueue<T>::enqueue(const T& val) {
     Node* newNode = new Node(val);
     if (!backPtr) {
         frontPtr = backPtr = newNode;
@@ -30,7 +28,7 @@ void SimpleQueue<T>::enqueue(const T& val) {
 }
 
 template <typename T>
-void SimpleQueue<T>::dequeue() {
+void StrukdatQueue<T>::dequeue() {
     if (!frontPtr) return;
     Node* temp = frontPtr;
     frontPtr = frontPtr->next;
@@ -40,39 +38,39 @@ void SimpleQueue<T>::dequeue() {
 }
 
 template <typename T>
-T& SimpleQueue<T>::front() {
+T& StrukdatQueue<T>::front() {
     if (!frontPtr) throw std::runtime_error("Queue is empty");
     return frontPtr->data;
 }
 
 template <typename T>
-const T& SimpleQueue<T>::front() const {
+const T& StrukdatQueue<T>::front() const {
     if (!frontPtr) throw std::runtime_error("Queue is empty");
     return frontPtr->data;
 }
 
 template <typename T>
-bool SimpleQueue<T>::isEmpty() const {
+bool StrukdatQueue<T>::isEmpty() const {
     return frontPtr == nullptr;
 }
 
 template <typename T>
-int SimpleQueue<T>::size() const {
+int StrukdatQueue<T>::size() const {
     return count;
 }
 
 template <typename T>
-void SimpleQueue<T>::clear() {
+void StrukdatQueue<T>::clear() {
     while (!isEmpty()) dequeue();
 }
 
 template <typename T>
-const typename SimpleQueue<T>::Node* SimpleQueue<T>::getFrontNode() const {
+const typename StrukdatQueue<T>::Node* StrukdatQueue<T>::getFrontNode() const {
     return frontPtr;
 }
 
 template <typename T>
-SimpleQueue<T>::SimpleQueue(const SimpleQueue<T>& other) : frontPtr(nullptr), backPtr(nullptr), count(0) {
+StrukdatQueue<T>::StrukdatQueue(const StrukdatQueue<T>& other) : frontPtr(nullptr), backPtr(nullptr), count(0) {
     Node* curr = other.frontPtr;
     while (curr) {
         enqueue(curr->data);
@@ -81,7 +79,7 @@ SimpleQueue<T>::SimpleQueue(const SimpleQueue<T>& other) : frontPtr(nullptr), ba
 }
 
 template <typename T>
-SimpleQueue<T>& SimpleQueue<T>::operator=(const SimpleQueue<T>& other) {
+StrukdatQueue<T>& StrukdatQueue<T>::operator=(const StrukdatQueue<T>& other) {
     if (this != &other) {
         clear();
         Node* curr = other.frontPtr;
@@ -93,4 +91,6 @@ SimpleQueue<T>& SimpleQueue<T>::operator=(const SimpleQueue<T>& other) {
     return *this;
 }
 
-template class SimpleQueue<std::pair<std::string, std::pair<std::string, int>>>;
+// header
+
+template class StrukdatQueue<std::pair<std::string, std::pair<std::string, int>>>;
