@@ -1,4 +1,4 @@
-#include "../include/strukdat/polis_list_sort.hpp"
+#include "strukdat/polis_list_sort.hpp"
 
 // ini bubble sort
 void UmurSort(PolisList& list) {

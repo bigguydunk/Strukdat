@@ -1,7 +1,7 @@
-#include "../include/strukdat/strukdat_stack.hpp"
+#include "strukdat/strukdat_stack.hpp"
+#include "strukdat/polis_list.hpp"
 #include <stdexcept>
-#include "../include/strukdat/polis_list.hpp"
-#include "../include/polis/polis.hpp"
+#include "polis/polis.hpp"
 
 // node constructor
 template <typename T>

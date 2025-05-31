@@ -1,16 +1,16 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -g -fdiagnostics-color=always
+CXXFLAGS = -std=c++17 -Iinclude -Isrc -g -fdiagnostics-color=always
 
 SRC = src/main.cpp \
     src/menu.cpp \
     src/polis/polis.cpp \
     src/polis/polis_io.cpp \
-    strukdat/xorcipher.cpp \
-    strukdat/encoding.cpp \
-    strukdat/strukdat_queue.cpp \
-    strukdat/polis_list.cpp \
-    strukdat/strukdat_stack.cpp \
-    strukdat/polis_list_sort.cpp
+    src/strukdat/xorcipher.cpp \
+    src/strukdat/encoding.cpp \
+    src/strukdat/strukdat_queue.cpp \
+    src/strukdat/polis_list.cpp \
+    src/strukdat/strukdat_stack.cpp \
+    src/strukdat/polis_list_sort.cpp
 
 TARGET = main.exe
 

@@ -1,4 +1,4 @@
-#include "../include/strukdat/polis_list.hpp"
+#include "strukdat/polis_list.hpp"
 #include <cstring>
 
 Polis::Polis() : nomorPolis(), nama(), umur(0), risiko(0), totalKlaim(0), klaimHead(nullptr), klaimCount(0) {}

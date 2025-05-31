@@ -1,9 +1,9 @@
 #include "../../include/polis/polis.hpp"
-#include "../../include/strukdat/xorcipher.hpp"
-#include "../../include/strukdat/encoding.hpp"
-#include "../../include/strukdat/polis_list_sort.hpp"
-#include "../../include/strukdat/strukdat_queue.hpp"
-#include "../../include/strukdat/strukdat_stack.hpp"
+#include "strukdat/xorcipher.hpp"
+#include "strukdat/encoding.hpp"
+#include "strukdat/polis_list_sort.hpp"
+#include "strukdat/strukdat_queue.hpp"
+#include "strukdat/strukdat_stack.hpp"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>

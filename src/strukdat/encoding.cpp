@@ -1,4 +1,4 @@
-#include "../include/strukdat/encoding.hpp"
+#include "strukdat/encoding.hpp"
 #include <sstream>
 #include <iomanip>
 using namespace std;
